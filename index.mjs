@@ -17,11 +17,20 @@ async function getLogs(apiInstance, params) {
 
     let nextPage = null;
     let n = 0;
+
+    const outputFile = argv.output ?? "results.log";
+    let writeStream = fs.createWriteStream(outputFile, {flags: 'w'});
+
     do {
         console.log(`Requesting page ${++n} ${nextPage ? `with cursor ${nextPage} ` : ``}`);
         const query = nextPage ? { ...params, pageCursor: nextPage } : params;
         const result = await apiInstance.listLogsGet(query);
-        data.push(...result.data);
+        
+        result.data.map(({attributes}) => {
+            const {message, timestamp} = attributes
+            writeStream.write(timestamp + ":" + message + "\n");
+        });
+
         nextPage = result?.meta?.page?.after;
         console.log(`${result.data.length} results (${data.length} total)`);
     } while (nextPage);
@@ -56,10 +65,6 @@ console.log(chalk.cyan("Downloading logs:\n" + JSON.stringify(initialParams, nul
         console.log(chalk.red(e.message));
         process.exit(1);
     }
-
-    const outputFile = argv.output ?? "results.json";
-    console.log(chalk.cyan(`\nWriting ${data.length} logs to ${outputFile}`));
-    fs.writeFileSync(outputFile, JSON.stringify(data, null, 2));
 
     console.log(chalk.green("Done!"));
 })();

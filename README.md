@@ -2,7 +2,12 @@
 
 Download logs from DataDog via the API.
 This allows you to download a large number of logs matching a particular query rather than being bound by the 5000 limit imposed on the export button in the UI.
-Logs are output as a JSON file.
+
+## Differences from parent repository
+
+- Logs are streamed directly to output file instead of being written as a single action at the end from memory. This avoid OOM issues for large logs
+- Logs are output as log lines instead of JSON.
+
 
 ## Usage
 
@@ -30,7 +35,7 @@ App keys are personal to your profile and can be generated in personal settings.
 
 --pageSize  How many results to download at a time, default 1000 limit of 5000
 
---output    Path of json file to write results to, default 'results.json'
+--output    Path of log file to write results to, default 'results.log'
 ```
 
 Note: Date/times are parsed by JS `Date` constructor, e.g. 2022-01-01
@@ -49,10 +54,7 @@ node index.mjs --query '"Redeem token failure" -@redeem_failure_reason:"Invalid 
 
 ## Caveats
 
-Logs are not streamed, they are all stored in memory and stringified / written as as single action.
-I have tested with 25k logs and there were no issues, the resultant JSON file was only 100mb so it seems likely that
-you could download 100k+ without running into memory or performance limits but ymmv.
-
+Be watchful of 429 HTTP response code when you paginate over large numbers in a short period of time. DataDog rate limits API calls, for more details refer https://docs.datadoghq.com/api/latest/rate-limits/
 
 ## Contributing
 
